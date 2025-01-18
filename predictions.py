@@ -232,6 +232,8 @@ def main():
 
                 predictions = conv_lstm_model.predict(synthetic_images)
 
+                loss,accuracy = conv_lstm_model.evaluate(image,predictions[0])
+                print("accuracy:",accuracy)
 
                 fig, ax = plt.subplots(1, 1, figsize=(15, 15))
                 ax.imshow(image)
