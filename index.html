@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tumor Detection System - Interactive Medical Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #005588;
+            --secondary-color: #00857d;
+            --accent-color: #ff4757;
+            --text-color: #333333;
+            --light-gray: #f5f5f5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: var(--accent-color);
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item:hover {
+            background: var(--light-gray);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .tools-section {
+            padding: 2rem;
+            background: var(--light-gray);
+            margin-top: 80px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 2rem auto;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-details {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 85, 136, 0.95);
+            color: white;
+            padding: 2rem;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+
+        .tool-card.active .feature-details {
+            transform: translateY(0);
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1400px;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            height: 300px;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px;
+            margin: 2rem auto;
+            max-width: 1400px;
+        }
+
+        .upload-btn {
+            background: white;
+            color: var(--primary-color);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .upload-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1400px;
+        }
+
+        .result-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            background: var(--light-gray);
+            margin-bottom: 1rem;
+        }
+
+        .loading-spinner {
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .image-display {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .image-box {
+            text-align: center;
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-box img {
+            max-width: 300px;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .about-section {
+            padding: 4rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .about-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .about-container h3 {
+            color: var(--secondary-color);
+            margin: 1.5rem 0 0.5rem 0;
+            font-size: 1.3rem;
+        }
+        
+        .about-container p {
+            margin: 1rem 0;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+
+        .patient-info-section {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .submit-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .analysis-section {
+            padding: 4rem 2rem;
+            background: var(--light-gray);
+        }
+
+        .analysis-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .analysis-grid {
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: 1fr;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .analysis-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prediction-levels {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .level {
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .level.low {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .level.moderate {
+            background: rgba(255, 165, 0, 0.1);
+        }
+
+        .level.high {
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .level h4 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .level ul, .treatment ul {
+            margin-top: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .level ul li, .treatment ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .treatment-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .treatment {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .treatment h4 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .lifestyle-recommendations ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .lifestyle-recommendations li {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lifestyle-recommendations li::before {
+            content: "•";
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .timeline-image {
+            text-align: center;
+        }
+
+        .timeline-image img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .timeline-image p {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .tumor-analysis-container {
+            margin: 2rem auto;
+            max-width: 1400px;
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .timeline-step {
+            text-align: center;
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .timeline-step img {
+            width: 100%;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .timeline-step h4 {
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .time-series-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .time-series-step {
+            text-align: center;
+            background: var(--light-gray);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .time-series-step img {
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .time-series-step p {
+            margin-top: 0.5rem;
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .tumor-growth-graph {
+            margin-top: 2rem;
+            padding: 1rem;
+        }
+
+        #growthChart {
+            width: 100% !important;
+            height: 300px !important;
+            margin-top: 1rem;
+        }
+
+        .growth-graph-container {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .growth-graph-container h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        #growthChart {
+            width: 100% !important;
+            height: 300px !important;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-microscope"></i>
+                TumorDetect
+            </div>
+            <nav class="main-nav">
+                <a href="#about" class="nav-item">
+                    <i class="fas fa-info-circle"></i>
+                    About Us
+                </a>
+                <a href="#predict" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Prediction
+                </a>
+                <a href="#analysis" class="nav-item">
+                    <i class="fas fa-brain"></i>
+                    Analysis
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="tools-section">
+        <h2 class="section-title">Our Features</h2>
+        <div class="tool-grid">
+            <div class="tool-card">
+                <i class="fas fa-upload tool-icon"></i>
+                <h3>Upload Scan</h3>
+                <p>Upload medical imaging scans for instant analysis</p>
+                <div class="feature-details">
+                    <p>Our advanced upload system supports various medical imaging formats including DICOM, JPG, and PNG. The platform ensures secure handling of sensitive medical data while providing instant processing capabilities. Simply drag and drop or select your files to begin the analysis process.</p>
+                </div>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-chart-pie tool-icon"></i>
+                <h3>Real-time Analysis</h3>
+                <p>Get immediate results with our AI-powered analysis</p>
+                <div class="feature-details">
+                    <p>Powered by state-of-the-art deep learning algorithms, our real-time analysis provides immediate insights into medical scans. The system can detect and highlight potential anomalies with high accuracy, offering detailed visualization and probability scores to assist medical professionals in their diagnosis.</p>
+                </div>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-history tool-icon"></i>
+                <h3>Track Progress</h3>
+                <p>Monitor changes and growth patterns over time</p>
+                <div class="feature-details">
+                    <p>Our progress tracking feature enables healthcare providers to monitor tumor development over time. Compare historical scans, track size changes, and analyze growth patterns with our interactive timeline view. Generate comprehensive reports and visualize trends to make informed decisions about treatment strategies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section" id="about">
+        <div class="about-container">
+            <h2>About Us</h2>
+            <p>Welcome to TumorDetect - your advanced medical imaging analysis platform. We are at the forefront of medical technology, combining artificial intelligence with healthcare expertise to revolutionize tumor detection and analysis.</p>
+            
+            <h3>Our Mission</h3>
+            <p>Our mission is to enhance the accuracy and efficiency of tumor detection through cutting-edge AI technology, providing healthcare professionals with reliable, rapid, and precise diagnostic support tools.</p>
+            
+            <h3>Technology & Innovation</h3>
+            <p>Our system employs state-of-the-art deep learning algorithms, trained on extensive datasets of medical imaging scans. We utilize advanced neural networks specifically optimized for medical image analysis, achieving high sensitivity and specificity in tumor detection.</p>
+            
+            <h3>Medical Expertise</h3>
+            <p>Developed in collaboration with leading oncologists and radiologists, our platform combines clinical expertise with technological innovation. While our AI-powered analysis serves as a supportive tool, we emphasize that all final diagnoses should be confirmed by qualified medical professionals.</p>
+            
+            <h3>Data Security</h3>
+            <p>We prioritize the security and confidentiality of medical data. Our platform adheres to international healthcare data protection standards, ensuring all patient information and medical images are processed and stored with the highest level of security.</p>
+            
+            <h3>Continuous Improvement</h3>
+            <p>We are committed to continuous improvement through regular updates to our algorithms, incorporation of new research findings, and adaptation to emerging medical imaging technologies. Our team works tirelessly to enhance the accuracy and capabilities of our detection system.</p>
+        </div>
+    </section>
+
+    <section class="patient-info-section" id="patient-info">
+        <div class="form-container">
+            <h2>Patient Information</h2>
+            <form id="patientForm">
+                <div class="form-group">
+                    <label for="patientName">Full Name:</label>
+                    <input type="text" id="patientName" required>
+                </div>
+                <div class="form-group">
+                    <label for="patientAge">Age:</label>
+                    <input type="number" id="patientAge" required>
+                </div>
+                <div class="form-group">
+                    <label for="patientGender">Gender:</label>
+                    <select id="patientGender" required>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">Continue to Scan Upload</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="upload-section" id="predict">
+        <h2>Upload Medical Scan</h2>
+        <p>Supported formats: DICOM, JPG, PNG</p>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            Upload Scan
+        </button>
+    </section>
+
+    <section class="results-container" style="display: none;">
+        <h2>Analysis Results</h2>
+        <div class="result-card">
+            <div class="image-display">
+                <div class="image-box">
+                    <h3>Input MRI Scan</h3>
+                    <img id="inputImage" src="#" alt="Input image" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="time-series-display">
+                <h3>Time Series Prediction</h3>
+                <div class="time-series-grid">
+                    <!-- Will be populated with 9 time steps -->
+                </div>
+            </div>
+            <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
+        </div>
+    </section>
+
+    <section class="tumor-analysis-container" style="display: none;">
+        <h2>Tumor Analysis</h2>
+        <div class="result-card">
+            <div class="analysis-grid">
+                <div class="growth-prediction">
+                    <h3>Growth Prediction</h3>
+                    <div class="timeline-grid">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    <div class="growth-graph-container">
+                        <h3>Tumor Growth Trajectory</h3>
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="analysis-section" id="analysis">
+        <div class="analysis-container">
+            <h2 class="section-title">Analysis & Recommendations</h2>
+            
+            <div class="analysis-grid">
+                <div class="analysis-card growth-prediction">
+                    <h3><i class="fas fa-chart-line"></i> Tumor Growth Prediction</h3>
+                    <div class="prediction-levels">
+                        <div class="level low">
+                            <h4>Low Risk</h4>
+                            <p>Small, well-defined tumors with minimal growth indicators</p>
+                            <ul>
+                                <li>Regular monitoring recommended</li>
+                                <li>Follow-up scans every 6 months</li>
+                                <li>Preventive lifestyle changes</li>
+                            </ul>
+                        </div>
+                        <div class="level moderate">
+                            <h4>Moderate Risk</h4>
+                            <p>Medium-sized tumors showing moderate growth patterns</p>
+                            <ul>
+                                <li>Early intervention recommended</li>
+                                <li>Quarterly follow-up scans</li>
+                                <li>Consider treatment options</li>
+                            </ul>
+                        </div>
+                        <div class="level high">
+                            <h4>High Risk</h4>
+                            <p>Rapidly growing or large tumors requiring immediate attention</p>
+                            <ul>
+                                <li>Immediate medical intervention required</li>
+                                <li>Monthly monitoring</li>
+                                <li>Aggressive treatment plan</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-card treatment-options">
+                    <h3><i class="fas fa-stethoscope"></i> Treatment Recommendations</h3>
+                    <div class="treatment-grid">
+                        <div class="treatment">
+                            <h4>Surgical Options</h4>
+                            <ul>
+                                <li>Complete tumor removal</li>
+                                <li>Partial resection</li>
+                                <li>Minimally invasive procedures</li>
+                            </ul>
+                        </div>
+                        <div class="treatment">
+                            <h4>Radiation Therapy</h4>
+                            <ul>
+                                <li>Targeted radiation</li>
+                                <li>Whole brain radiation</li>
+                                <li>Stereotactic radiosurgery</li>
+                            </ul>
+                        </div>
+                        <div class="treatment">
+                            <h4>Chemotherapy</h4>
+                            <ul>
+                                <li>Systemic treatment</li>
+                                <li>Targeted drug therapy</li>
+                                <li>Combination protocols</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-card lifestyle-recommendations">
+                    <h3><i class="fas fa-heart"></i> Lifestyle Recommendations</h3>
+                    <ul>
+                        <li>Maintain a healthy diet rich in antioxidants</li>
+                        <li>Regular moderate exercise as permitted</li>
+                        <li>Stress management techniques</li>
+                        <li>Adequate rest and sleep</li>
+                        <li>Regular medical check-ups</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.getElementById('patientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Hide patient form and show upload section
+            document.querySelector('.patient-info-section').style.display = 'none';
+            document.querySelector('.upload-section').style.display = 'block';
+        });
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Show containers
+                document.querySelector('.results-container').style.display = 'block';
+                document.querySelector('.tumor-analysis-container').style.display = 'block';
+                
+                // Display input image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const inputImage = document.getElementById('inputImage');
+                    inputImage.src = e.target.result;
+                    inputImage.style.display = 'block';
+
+                    // Process the image using predictions.py logic
+                    processImage(e.target.result);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function processImage(imageData) {
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+            
+            // Make API call to Flask backend
+            fetch('http://localhost:5000/process-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide loading spinner
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    
+                    // Display time series predictions
+                    displayTimeSeriesResults(data.predictions);
+                    
+                    // Update growth graph
+                    updateGrowthGraph(data.growthData);
+                } else {
+                    console.error('Error:', data.error);
+                    alert('Error processing image. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing image. Please try again.');
+                document.getElementById('loadingSpinner').style.display = 'none';
+            });
+        }
+
+        function displayTimeSeriesResults(predictions) {
+            const timeSeriesContainer = document.querySelector('.time-series-grid');
+            timeSeriesContainer.innerHTML = '';
+            
+            predictions.forEach((prediction, index) => {
+                const timeStep = document.createElement('div');
+                timeStep.className = 'time-series-step';
+                
+                const stepImage = document.createElement('img');
+                stepImage.src = `data:image/png;base64,${prediction}`;
+                
+                const timeLabel = document.createElement('p');
+                timeLabel.textContent = `Time Step ${index + 1}`;
+                
+                timeStep.appendChild(stepImage);
+                timeStep.appendChild(timeLabel);
+                timeSeriesContainer.appendChild(timeStep);
+            });
+        }
+
+        function updateGrowthGraph(growthData) {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: growthData.map(d => `Time ${d.timeStep}`),
+                    datasets: [{
+                        label: 'Tumor Growth',
+                        data: growthData.map(d => d.value),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tumor Size'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Steps'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add click event listeners to tool cards
+        document.querySelectorAll('.tool-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove active class from all cards
+                document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+                // Add active class to clicked card
+                this.classList.toggle('active');
+            });
+        });
+
+        // Also add this helper function to display the original results
+        function displayResults(imageArray) {
+            const predictionImage = document.getElementById('predictionImage');
+            if (predictionImage) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 224;
+                canvas.height = 224;
+                
+                // Create grayscale prediction
+                const imageData = ctx.createImageData(224, 224);
+                for (let i = 0; i < imageArray.length; i += 4) {
+                    // Convert to grayscale
+                    const intensity = (imageArray[i] + imageArray[i + 1] + imageArray[i + 2]) / 3;
+                    
+                    // Apply the same grayscale value to maintain medical imaging look
+                    imageData.data[i] = intensity;     // R
+                    imageData.data[i + 1] = intensity; // G
+                    imageData.data[i + 2] = intensity; // B
+                    imageData.data[i + 3] = 255;       // Alpha
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                
+                // Apply slight contrast adjustment to match medical imaging
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = 'rgba(240, 240, 240, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                predictionImage.src = canvas.toDataURL();
+                predictionImage.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html> 

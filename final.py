@@ -73,16 +73,21 @@ def prepare_conv_lstm_data(images):
 
 
 def main():
-    training_folder = r"C:\\Users\\crdik\\Downloads\\mpw\\dataset and backend\\Training1"
+    training_folder = r"C:\\Users\\crdik\\Downloads\\mpw\\dataset and backend\\Training\\glioma"
     testing_folder = r"C:\\Users\\crdik\\Downloads\\mpw\\dataset and backend\\Testing1"
     time_steps = 10
     image_shape = (224, 224, 3)
+    batch_size = 30
 
-    X_train_list, y_train_list = [], []
+    X_train_list, y_train_list = [],[]
 
-    for filename in os.listdir(training_folder):
-        image_path = os.path.join(training_folder, filename)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+    # Training data processing in batches
+    training_files = [f for f in os.listdir(training_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    for i in range(0, len(training_files), batch_size):
+        batch_files = training_files[i:i + batch_size]
+
+        for filename in batch_files:
+            image_path = os.path.join(training_folder, filename)
             try:
                 image = preprocess_image(image_path, target_size=image_shape[:2])
                 synthetic_images, _ = generate_synthetic_data_logistic(image, time_steps)
@@ -93,22 +98,31 @@ def main():
             except Exception as e:
                 print(f"Error processing {filename}: {e}")
 
-    X_train = np.vstack(X_train_list)
-    y_train = np.vstack(y_train_list)
+        if X_train_list:  # If list is not empty
+            X_train = np.vstack(X_train_list)
+            y_train = np.vstack(y_train_list)
 
-    num_samples = X_train.shape[0] // time_steps
-    X_train = X_train[:num_samples * time_steps].reshape(num_samples, time_steps, *image_shape)
-    y_train = y_train[:num_samples * time_steps].reshape(num_samples, time_steps, *image_shape)
+            num_samples = X_train.shape[0] // time_steps
+            X_train = X_train[:num_samples * time_steps].reshape(num_samples, time_steps, *image_shape)
+            y_train = y_train[:num_samples * time_steps].reshape(num_samples, time_steps, *image_shape)
 
-    conv_lstm_model = build_conv_lstm(image_shape=image_shape, time_steps=time_steps)
-    conv_lstm_model.fit(X_train, y_train, epochs=1, batch_size=1)
+            conv_lstm_model = build_conv_lstm(image_shape=image_shape, time_steps=time_steps)
+            conv_lstm_model.fit(X_train, y_train, epochs=1, batch_size=1)
 
+            # Clear lists for the next batch
+            X_train_list.clear()
+            y_train_list.clear()
+
+    # Testing data processing in batches
     all_y_true = []
     all_y_pred = []
 
-    for filename in os.listdir(testing_folder):
-        image_path = os.path.join(testing_folder, filename)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+    testing_files = [f for f in os.listdir(testing_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    for i in range(0, len(testing_files), batch_size):
+        batch_files = testing_files[i:i + batch_size]
+
+        for filename in batch_files:
+            image_path = os.path.join(testing_folder, filename)
             try:
                 image = preprocess_image(image_path, target_size=image_shape[:2])
                 synthetic_images, _ = generate_synthetic_data_logistic(image, time_steps)
