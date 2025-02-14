@@ -83,6 +83,9 @@ def main():
 
     # Train LSTM model
     lstm_model = train_lstm_model(X_train, y_train)
+    
+    # Save the trained model
+    lstm_model.save('lstm_model.h5')
 
     # Test on new data and plot predictions
     for filename in os.listdir(testing_folder):

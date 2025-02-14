@@ -4,10 +4,11 @@ import numpy as np
 import cv2
 import base64
 from predictions import generate_synthetic_data_logistic
-from GrowthGraph import logistic_growth
+from GrowthGraph import train_lstm_model, prepare_lstm_data
 import pickle
 import io
 from PIL import Image
+import tensorflow as tf
 
 app = Flask(__name__)
 CORS(app)
@@ -31,11 +32,11 @@ def preprocess_image(image_array, target_size=(224, 224)):
     
     return rgb_image / 255.0  # Normalize to [0, 1]
 
-# Load the trained model
+# Load the trained LSTM model
 try:
-    model = pickle.load(open('predictions.pkl', 'rb'))
+    lstm_model = tf.keras.models.load_model('lstm_model.h5')
 except:
-    model = None
+    lstm_model = None
 
 @app.route('/process-image', methods=['POST'])
 def process_image():
@@ -52,43 +53,55 @@ def process_image():
         image_np = np.array(image)
         processed_image = preprocess_image(image_np)
         
-        # Use the same parameters as in your original model
-        time_steps = 10  # Changed to match original
-        V0 = 50         # Initial tumor size
-        V_max = 500     # Maximum tumor size
-        r = 0.1         # Growth rate
+        try:
+            # Generate synthetic data
+            synthetic_images, tumor_areas = generate_synthetic_data_logistic(
+                processed_image, 
+                time_steps=10,
+                V0=50,
+                V_max=500,
+                r=0.1
+            )
+            
+            # Reshape tumor_areas for LSTM input
+            X_test = tumor_areas[:-1].reshape(-1, 1, 1)
+            
+            # Get predictions from LSTM model
+            if lstm_model is None:
+                raise ValueError("LSTM model not loaded")
+            
+            # Generate predictions one step at a time
+            predicted_areas = []
+            current_input = X_test[0].reshape(1, 1, 1)
+            
+            for _ in range(len(X_test)):
+                pred = lstm_model.predict(current_input, verbose=0)
+                predicted_areas.append(float(pred[0, 0]))
+                current_input = pred.reshape(1, 1, 1)
+            
+            # Prepare growth data for frontend
+            growth_data = {
+                'timeSteps': list(range(len(tumor_areas)-1)),
+                'trueGrowth': [float(area) for area in tumor_areas[:-1]],
+                'predictedGrowth': predicted_areas
+            }
+            
+            print("True growth:", growth_data['trueGrowth'])
+            print("Predicted growth:", growth_data['predictedGrowth'])
+            
+        except Exception as e:
+            print(f"Error in growth prediction: {str(e)}")
+            raise e
         
-        # Generate synthetic data with the same parameters
-        synthetic_images, tumor_areas = generate_synthetic_data_logistic(
-            processed_image, 
-            time_steps,
-            V0=V0,
-            V_max=V_max,
-            r=r
-        )
-        
-        # Use actual tumor areas for growth data
-        growth_data = []
-        for t, area in enumerate(tumor_areas):
-            growth_data.append({
-                'timeStep': t + 1,
-                'value': float(area)  # Use actual computed areas
-            })
-        
-        # Convert images to base64 for sending back to frontend
+        # Convert images to base64 for frontend
         image_predictions = []
         for img in synthetic_images:
-            # Convert to grayscale by taking average of channels
+            # Convert to grayscale
             gray_img = np.mean(img, axis=2)
-            
-            # Normalize and convert to uint8
             gray_img = (gray_img * 255).astype(np.uint8)
-            
-            # Convert to RGB (all channels will be the same - creating grayscale)
             gray_rgb = np.stack([gray_img] * 3, axis=2)
             
             img_pil = Image.fromarray(gray_rgb)
-            
             buffered = io.BytesIO()
             img_pil.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode()
