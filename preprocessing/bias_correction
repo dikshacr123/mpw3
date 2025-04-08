@@ -1,0 +1,56 @@
+import nibabel as nib
+import numpy as np
+import SimpleITK as sitk
+import matplotlib.pyplot as plt
+
+def bias_correction(image):
+    """ Perform N4ITK bias field correction on a single 2D slice """
+    sitk_image = sitk.GetImageFromArray(image.astype(np.float32))
+    mask = sitk.OtsuThreshold(sitk_image, 0, 1, 200)
+    corrector = sitk.N4BiasFieldCorrectionImageFilter()
+    corrected_image = corrector.Execute(sitk_image, mask)
+    return sitk.GetArrayFromImage(corrected_image).astype(np.uint8)
+
+def process_brats_mri_bias_correction(input_nii_path, output_nii_path):
+    """ Apply N4ITK bias correction to all slices in a 3D MRI scan from the BraTS dataset """
+    
+    # Load the NIfTI file
+    mri_nifti = nib.load(input_nii_path)
+    mri_data = mri_nifti.get_fdata()  # Get 3D numpy array
+    
+    # Normalize MRI to [0, 255] for processing
+    mri_data = (mri_data - np.min(mri_data)) / (np.max(mri_data) - np.min(mri_data)) * 255
+    mri_data = mri_data.astype(np.uint8)
+    
+    # Select a middle slice for visualization
+    mid_slice_idx = mri_data.shape[0] // 2
+    original_slice = mri_data[mid_slice_idx]
+    corrected_slice = bias_correction(original_slice)
+    
+    # Display the original and corrected slice
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    axes[0].imshow(original_slice, cmap='gray')
+    axes[0].set_title("Original Slice")
+    axes[0].axis("off")
+    
+    axes[1].imshow(corrected_slice, cmap='gray')
+    axes[1].set_title("Bias-Corrected Slice")
+    axes[1].axis("off")
+    
+    plt.show()
+    
+    # Process each slice with N4ITK bias correction
+    corrected_slices = np.array([bias_correction(slice) for slice in mri_data], dtype=np.uint8)
+    
+    # Convert back to NIfTI format
+    corrected_nifti = nib.Nifti1Image(corrected_slices, affine=mri_nifti.affine)
+    
+    # Save the processed MRI scan
+    nib.save(corrected_nifti, output_nii_path)
+    print(f"Saved bias-corrected MRI scan: {output_nii_path}")
+
+# Example usage
+input_nii = r"dataset and backend\\Training1\\BraTS20\\BraTS20_Training_001\\BraTS20_Training_001_flair.nii"  # Replace with your file
+output_nii = "BraTS2021_00000_flair_bias_corrected.nii"
+
+process_brats_mri_bias_correction(input_nii, output_nii)
