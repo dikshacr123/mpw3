@@ -5,9 +5,9 @@ import os
 from skimage.measure import marching_cubes
 
 # Define folders
-flair_folder = r"C:\Users\gowri\OneDrive\Desktop\FE\FLAIR"
-seg_folder = r"C:\Users\gowri\OneDrive\Desktop\FE\seg"
-main_path = r"C:\Users\gowri\OneDrive\Desktop\FE"
+flair_folder = "preprocessed_images"
+seg_folder = "dataset and backend\seg"
+main_path = "FE"
 csv_path = os.path.join(main_path, "tumor_features.csv")
 
 # Collect all FLAIR files
