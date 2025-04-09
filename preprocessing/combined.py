@@ -3,6 +3,7 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from skimage.restoration import denoise_nl_means, estimate_sigma
+import os
 
 # === Step 1: Bias Correction ===
 def bias_correction(image):
@@ -81,7 +82,7 @@ def preprocess_mri_pipeline(input_nii_path, output_nii_path):
         enhanced = agcwd(denoised)
 
         processed_volume.append(enhanced)
-        #print(f"Processed slice {i+1}/{mri_data.shape[2]}")
+        print(f"Processed slice {i+1}/{mri_data.shape[2]}")
 
     processed_volume = np.stack(processed_volume, axis=2)
     processed_nifti = nib.Nifti1Image(processed_volume.astype(np.uint8), affine=mri_nifti.affine)
@@ -89,7 +90,13 @@ def preprocess_mri_pipeline(input_nii_path, output_nii_path):
     print(f"✅ Saved fully preprocessed MRI scan: {output_nii_path}")
 
 # === Example usage ===
-input_nii = r"dataset and backend\Training1\BraTS20\BraTS20_Training_001\BraTS20_Training_001_flair.nii"
-output_nii = "preprocessed_images\BraTS20_Training_001_flair_preprocessed_full.nii"
-
-preprocess_mri_pipeline(input_nii, output_nii)
+folder_path = 'dataset and backend\Flair'
+output_folder = 'preprocessed_images'
+# Iterate over all files in the folder
+for filename in os.listdir(folder_path):
+    file_path = os.path.join(folder_path, filename)
+    if os.path.isfile(file_path):
+        input_nii = file_path  # or use it as a variable
+        base_name = os.path.splitext(filename)[0]
+        output_nii = os.path.join(output_folder, f"{base_name}_preprocessed_full.nii")
+        preprocess_mri_pipeline(input_nii, output_nii)

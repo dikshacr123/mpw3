@@ -17,7 +17,7 @@ all_features = []
 
 for flair_file in flair_files:
     #patient_id = flair_file.split("_")[0]  # Assumes format: PatientID_flair.nii
-    patient_id = flair_file.replace("_flair.nii", "")
+    patient_id = flair_file.replace("_flair_preprocessed_full.nii", "")
     flair_path = os.path.join(flair_folder, flair_file)
     
     seg_file = f"{patient_id}_seg.nii"
