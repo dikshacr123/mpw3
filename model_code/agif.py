@@ -6,10 +6,15 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import imageio
 
-# --- Richards Growth Function ---
-def richards_growth(V0, V_max, r, t, a=1.5):
-    numerator = (V_max / V0) ** a - 1
-    return V_max * (1 + numerator * np.exp(-r * a * t)) ** (-1 / a)
+df = pd.read_csv(r"model_code\global_richards_params.csv")
+K = df['Value'][0]
+B = df['Value'][1]
+Q = df['Value'][2]
+M = df['Value'][3]
+nu = df['Value'][4]
+# --- Richards Growth Function (Parameter-based) ---
+def richards_growth_param(t, K, B, Q, M, nu):
+    return K * (1 + Q * np.exp(-B * (t - M))) ** (-1 / nu)
 
 # --- Segment Tumor (if needed) ---
 def segment_tumor(feature_slice):
@@ -31,7 +36,7 @@ def generate_growth_from_volume(original_slice, tumor_mask, V0, V_max, r, time_s
     pixels_per_mm = 1.0  # adjust if you know pixel spacing from .nii header
 
     for t in range(time_steps):
-        Vt = richards_growth(V0, V_max, r, t)
+        Vt = richards_growth_param(t, K, B, Q, M, nu)
         rt = Vt ** (1 / 3)
         delta_r = rt - r0
         iterations = max(1, int(delta_r * pixels_per_mm))
