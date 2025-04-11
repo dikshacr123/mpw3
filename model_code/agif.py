@@ -5,6 +5,27 @@ import pandas as pd
 import nibabel as nib
 import matplotlib.pyplot as plt
 import imageio
+import nibabel as nib
+import cv2
+import numpy as np
+import os
+
+def save_middle_slice_as_png(nii_path, output_path):
+    # Load NIfTI
+    nii_img = nib.load(nii_path)
+    volume = nii_img.get_fdata()
+
+    # Get middle slice (axial)
+    mid_idx = volume.shape[2] // 2
+    slice_img = volume[:, :, mid_idx]
+
+    # Normalize to 0-255
+    slice_img = cv2.normalize(slice_img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+    # Save as PNG
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    cv2.imwrite(output_path, slice_img)
+    print(f"[✓] Saved middle slice as: {output_path}")
 
 # Load Richards growth parameters from CSV
 df_params = pd.read_csv(r"model_code\global_richards_params.csv")
@@ -107,7 +128,8 @@ def simulate_from_csv(csv_path, nii_dir, mask_dir, output_dir, time_steps=10):
         images = generate_growth_from_volume(brain_slice, tumor_mask, V0, time_steps)
         patient_folder = os.path.join(output_dir, patient_id)
         save_as_images(images, patient_folder)
-
+        flair_png_path = os.path.join(patient_folder, "flair_middle.png")
+        save_middle_slice_as_png(img_path, flair_png_path)
 # Example usage:
 simulate_from_csv(
     csv_path=r"FE\tumor_features.csv",
